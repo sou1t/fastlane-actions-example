@@ -1,0 +1,19 @@
+name: CodeCheck
+on: [push]
+
+jobs:
+ lint:
+  runs-on: self-hosted
+  steps:
+      - uses: actions/checkout@v2
+      - name: Run linter
+        run: fastlane ios lint
+        shell: sh
+        
+ tests:
+  runs-on: self-hosted
+  steps:
+      - uses: actions/checkout@v2
+      - name: Run unit tests
+        run: fastlane ios tests
+        shell: sh

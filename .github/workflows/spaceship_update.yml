@@ -1,0 +1,12 @@
+name: Update_Spaceship_Token
+on: [workflow_dispatch]
+
+# use this on your own risks
+jobs:
+  spaceship:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update spaceship token
+        run: cp ./session ~/.fastlane/spaceship/dev@welps.app/cookie
+        shell: sh

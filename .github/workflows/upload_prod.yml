@@ -1,0 +1,11 @@
+name: Upload_Prod
+on: [workflow_dispatch]
+
+jobs:
+  prod:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upload prod build to AppStore
+        run: fastlane ios upload_prod
+        shell: sh

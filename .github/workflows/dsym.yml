@@ -1,0 +1,11 @@
+name: Upload_All_DSYM
+on: [workflow_dispatch]
+
+jobs:
+  dsymsall:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upload all dsyms to Firebase
+        run: fastlane ios dsym_all
+        shell: sh

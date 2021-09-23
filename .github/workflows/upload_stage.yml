@@ -1,0 +1,11 @@
+name: Upload_Stage
+on: [workflow_dispatch]
+
+jobs:
+  stage:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upload stage build to AppStore
+        run: fastlane ios upload_stage
+        shell: sh

@@ -1,0 +1,88 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+ENV["SLACK_URL"] = "https://hooks.slack.com/services/...."
+
+platform :ios do
+
+  desc "Run unit tests"
+  lane :tests do
+    clear_derived_data()
+    scan(scheme: "App Mock", clean: true)
+  end
+
+  desc "Check for linter errors"
+  lane :lint do
+    swiftlint()
+  end
+
+  desc "Deploy a new version of PROD to the App Store"
+  lane :upload_prod do
+    upload_appstore(scheme: "App", app_id: "com.App")
+  end
+
+  desc "Deploy a new version of STAGE to the App Store"
+  lane :upload_stage do
+    upload_appstore(scheme: "App Stage", app_id: "com.App.stage")
+  end
+
+  desc "Upload actual dSYM to Crashliytics"
+  lane :dsym do
+    download_dsyms(version: "live", app_identifier: "com.App")
+    upload_symbols_to_crashlytics(gsp_path: "GoogleService-Info.plist")
+    clean_build_artifacts
+  end
+
+  desc "Upload all dSYM to Crashliytics"
+  lane :dsym_all do
+    download_dsyms(after_uploaded_date: "2020-09-11T19:00:00+01:00", app_identifier: "com.App")
+    upload_symbols_to_crashlytics(gsp_path: "GoogleService-Info.plist")
+    clean_build_artifacts
+  end
+
+  desc "Sign, build and upload version to AppStore. Options are: scheme and app_id"
+  private_lane :upload_appstore do |options|
+    scheme      = options[:scheme]
+    identifier  = options[:app_id]
+    match(
+      app_identifier: [identifier],
+      type: "appstore",
+      readonly: false,
+      clone_branch_directly: true,
+      force: true
+    )
+    gym(scheme: scheme)
+    pilot(app_identifier: identifier, skip_waiting_for_build_processing: true)
+    tell_uploaded_to_slack(scheme: scheme)
+  end
+
+  desc "Send a messange to slack with success result."
+  private_lane :tell_uploaded_to_slack do |options|
+    scheme      = options[:scheme]
+    version     = get_version_number(xcodeproj: "*.xcodeproj")
+    build       = get_build_number(xcodeproj: "*.xcodeproj")
+    environment = scheme.upcase
+    slack(message: "@here Новая сборка iOS #{scheme} #{version} (#{build}) загружена!")
+  end
+
+  desc "Throw any error to slack"
+  error do |lane, exception|
+    slack(
+      message: exception.to_s,
+      success: false,
+      payload: { "Output" => exception.error_info.to_s }
+    )
+  end
+end
